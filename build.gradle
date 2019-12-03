@@ -16,10 +16,6 @@ task buildArtifact(type: Zip) {
    destinationDirectory = file(buildDir)
 }
 
-signing {
-    sign configurations.archives
-}
-
 publishing {
     repositories {
         maven {
@@ -38,32 +34,12 @@ publishing {
             artifact pathCombine(buildDir, artifactName)
 
             setupPomForMavenCentral(pom)
-
-            // create the signed pom artifact
-            pom.withXml {
-                def pomFile = file("${project.buildDir}/generated-pom.xml")
-                writeTo(pomFile)
-                def pomAscFile = signing.sign(pomFile).signatureFiles[0]
-                artifact(pomAscFile) {
-                    classifier = null
-                    extension = 'pom.asc'
-                }
-            }
-
-            // create the signed artifacts
-            project.tasks.signArchives.signatureFiles.each {
-                artifact(it) {
-                    def matcher = it.file =~ /\.zip$/
-                    if (matcher.find()) {
-                        classifier = matcher.group(1)
-                    } else {
-                        classifier = null
-                    }
-                    extension = 'zip'
-                }
-            }
         }
     }
+}
+
+signing {
+    sign publishing.publications.maven
 }
 
 def setupPomForMavenCentral(pom) {
@@ -108,18 +84,6 @@ def setupPomForMavenCentral(pom) {
                 }
             }
         }
-    }
-}
-
-model {
-    tasks.generatePomFileForMavenPublication {
-        destination = file("$buildDir/generated-pom.xml")
-    }
-    tasks.publishMavenPublicationToMavenLocal {
-        dependsOn project.tasks.signArchives
-    }
-    tasks.publishMavenPublicationToMavenRepository {
-        dependsOn project.tasks.signArchives
     }
 }
 
