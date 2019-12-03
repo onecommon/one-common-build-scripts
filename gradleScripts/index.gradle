@@ -1,0 +1,4 @@
+def rootDir = 'gradleScripts'
+
+apply from: "$rootDir/file/index.gradle"
+apply from: "$rootDir/release.gradle"

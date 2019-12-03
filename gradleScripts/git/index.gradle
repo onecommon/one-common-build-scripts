@@ -1,0 +1,185 @@
+import java.util.*
+
+def execCommand(String cmdText) {
+    def process = cmdText.execute()
+    process.waitFor()
+    if (process.exitValue() != 0) {
+        throw new GradleException("An error occured while running the command '$cmdText' ${process.err.text}")
+    }
+    return process.in.text
+}
+
+public String getBranchName() {
+    return execCommand("git rev-parse --abbrev-ref HEAD")
+}
+
+private boolean branchMatches(String regex) {
+    return getBranchName().replaceAll("\\s","") ==~ regex
+}
+
+public boolean isMaster() {
+    return branchMatches(/master/)
+}
+
+public boolean isDevelop() {
+    return branchMatches(/develop/)
+}
+
+public boolean isFeature() {
+    return branchMatches(/feature.*/)
+}
+
+public boolean isRelease() {
+    return branchMatches(/master|release.*|hotfix.*/)
+}
+
+private void validateRepo() {
+    def status = execCommand('git status --porcelain')
+    if (status) {
+        throw new GradleException("Branch is not clean")
+    }
+}
+
+public List getTags() {
+    def tags = []
+    def tagStrs = execCommand('git tag -l --sort=-version:refname')
+
+    tagStrs.eachLine {
+        tags.add(it.minus('v'))
+    }
+
+    return tags
+}
+
+public String getLatestTag() {
+    def tags = getTags()
+    for(String tag : tags) {
+        if(tag ==~ /^(\d+\.)?(\d+\.)?(\*|\d+)$/) {
+            return tag
+        }
+    }
+    return ''
+}
+
+public String getReleaseVersion() {
+    if(isRelease()) {
+        def v = getBranchName() =~ /(?!.*\/).+/
+        return v.getAt(0)
+    }
+
+    return ""
+}
+
+private void checkoutBranch(String branchName) {
+    execCommand("git checkout $branchName")
+}
+
+private void createBranch(String branchName) {
+    execCommand("git branch $branchName")
+}
+
+private void merge(String branchName) {
+    execCommand("git merge $branchName")
+}
+
+private void reset() {
+    execCommand("git clean -fd")
+    execCommand("git reset --hard")
+}
+
+private void push(String branchName, boolean dryRun = false) {
+    println "Checking out $branchName and pushing (dryRun = $dryRun)..."
+    checkoutBranch(branchName)
+    if (dryRun) {
+        execCommand("git push origin HEAD --tags --dry-run")
+    } else {
+        execCommand("git push origin HEAD --tags")
+    }
+}
+
+private void pushTags(boolean dryRun = false) {
+if (dryRun) {
+        execCommand("git push --tags --dry-run")
+    } else {
+        execCommand("git push --tags")
+    }
+}
+
+private void deleteBranch(String branchName) {
+    try {
+        execCommand("git push origin --delete $branchName")
+    }
+    catch (Throwable t) {
+        println "Cannot remove remote branch: $t"
+    }
+
+    execCommand("git branch -D $branchName")
+}
+
+def verifyReleaseTag() {
+    // Release version in release branch should match with tag
+    def releaseVersion = getReleaseVersion()
+    def latestTag = getLatestTag()
+    def branchName = getBranchName()
+
+    if (releaseVersion != latestTag) {
+        throw new GradleException("Release branch '$branchName' does not match the latest tag '$latestTag'")
+    }
+
+    println "Release branch '$branchName' matches the latest tag '$latestTag'"
+}
+
+public void cutRelease(String version, boolean shouldValidateRepo) {
+    if (!isDevelop()) {
+        checkoutBranch('develop')
+    }
+    if (shouldValidateRepo) {
+        validateRepo()
+    }
+    def branchName = 'release/' + version
+    createBranch(branchName)
+    checkoutBranch(branchName)
+}
+
+public void finishRelease() {
+    if (!isRelease()) {
+        throw new GradleException("Not on a release branch")
+    }
+    verifyReleaseTag()
+    def releaseBranchName = getBranchName()
+    reset()
+    checkoutBranch('develop')
+    merge(releaseBranchName)
+    checkoutBranch('master')
+    merge('develop')
+    pushTags(true)
+    pushTags()
+    push('develop', true)
+    push('develop')
+    push('master', true)
+    push('master')
+    deleteBranch(releaseBranchName)
+}
+
+public void hotfix(String version) {
+    if (!isMaster()) {
+        throw new GradleException("Not on a master branch")
+    }
+    def branchName = "hotfix/" + version
+    createBranch(branchName)
+    checkoutBranch(branchName)
+}
+
+ext {
+    isRelease = this.isRelease()
+    isDevelop = this.isDevelop()
+    isFeature = this.isFeature()
+    isMaster = this.isMaster()
+    branchName = this.getBranchName()
+    releaseVersion = this.getReleaseVersion()
+    isDeployable = isMaster || isDevelop
+    latestTag = this.getLatestTag()
+    cutRelease = { version, shouldValidateRepo -> this.cutRelease(version, shouldValidateRepo) }
+    finishRelease = { this.finishRelease() }
+    hotfix = { version -> this.hotfix(version) }
+}

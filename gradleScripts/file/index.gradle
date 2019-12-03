@@ -1,0 +1,41 @@
+def getAllFiles(path, recursive = false) {
+    def results = []
+    def file = new File(path)
+
+    if (!file.exists()) {
+        return results;
+    }
+
+    if (file.isFile()) {
+        results.add(file)
+        return result;
+    }
+
+    if (file.isDirectory()) {
+        if (recursive) {
+            file.eachFileRecurse {
+                if (it.isFile()) {
+                    results.add(it)
+                }
+            }
+        }
+        else {
+            file.eachFile{
+                if (it.isFile()) {
+                    results.add(it)
+                }
+            }
+        }
+    }
+
+    return results;
+}
+
+public String pathCombine(Object... files) {
+    return files.join(File.separator) 
+}
+
+ext {
+    getAllFiles = { path, recursive = false -> this.getAllFiles(path, recursive) }
+    pathCombine = { ...files -> this.pathCombine(files) }
+}

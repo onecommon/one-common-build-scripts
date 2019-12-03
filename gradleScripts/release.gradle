@@ -1,0 +1,55 @@
+apply from: "gradleScripts/git/index.gradle"
+
+def bumpVersion(String version, boolean isPatch) {
+    if (version == '' || version == null) {
+        version = '0.0.0'
+    }
+
+    def tokens = version.tokenize('//.')
+    def minorNumber = tokens[1].toInteger()
+    def majorNumber = tokens[0].toInteger()
+
+    if (isPatch) {
+        def patchVersion = tokens[2].toInteger() + 1
+        return majorNumber.toString() + '.' + minorNumber.toString() + '.' + patchVersion
+    }
+    def newMinor = (minorNumber + 1) % 1000
+    if (newMinor < minorNumber) {
+        majorNumber++
+    }
+    return majorNumber.toString() + '.' + newMinor.toString() + '.0'
+}
+
+
+def publishVersion() {
+    if (isDevelop) {
+        return bumpVersion(latestTag, false) + '-SNAPSHOT'
+    }
+    else if (isMaster) {
+        return latestTag
+    }
+    else {
+        def matcher = branchName =~ /^feature\/(.+)/
+        if (matcher.asBoolean()) {
+            return bumpVersion(latestTag, false) + "-${matcher[0][1]}-SNAPSHOT"
+        }
+
+        matcher = branchName =~ /^(hotfix|backport|release)\/(.+)/
+        if (matcher.asBoolean()) {
+            return matcher[0][2]
+        }
+
+        throw new GradleException("No matching publishing version for non-conforming gitflow branch: '$branchName'.")
+    }
+} 
+
+ext.publishVersion = this.publishVersion()
+ext.sonatypeMavenRepo = isRelease ? 
+    "https://oss.sonatype.org/service/local/staging/deploy/maven2" :
+    "https://oss.sonatype.org/content/repositories/snapshots"
+
+if (!sonatypeUsername?.trim() || !sonatypePassword?.trim()) {
+    println "sonatypeUsername and sonatypePassword variables are not set!"
+} else {
+    println "Found sonatypeUsername and sonatypePassword"
+}

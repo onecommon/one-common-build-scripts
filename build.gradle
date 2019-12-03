@@ -1,0 +1,127 @@
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+apply from: 'gradleScripts/index.gradle'
+
+println "Publish Version: $publishVersion"
+println "Publish repo: $sonatypeMavenRepo"
+
+def artifactId = 'one-common-build-scripts'
+def artifactName = "${artifactId}.zip"
+def buildDir = 'build'
+
+task buildArtifact(type: Zip) {
+   from './'
+   include 'gradleScripts/**/*'
+   archiveFileName = artifactName
+   destinationDirectory = file(buildDir)
+}
+
+signing {
+    sign configurations.archives
+}
+
+publishing {
+    repositories {
+        maven {
+            url sonatypeMavenRepo
+            credentials {
+                username sonatypeUsername
+                password sonatypePassword
+            }
+        }
+    }
+    
+    publications {
+        maven(MavenPublication) {
+            artifactId = artifactId
+            version publishVersion
+            artifact pathCombine(buildDir, artifactName)
+
+            setupPomForMavenCentral(pom)
+
+            // create the signed pom artifact
+            pom.withXml {
+                def pomFile = file("${project.buildDir}/generated-pom.xml")
+                writeTo(pomFile)
+                def pomAscFile = signing.sign(pomFile).signatureFiles[0]
+                artifact(pomAscFile) {
+                    classifier = null
+                    extension = 'pom.asc'
+                }
+            }
+
+            // create the signed artifacts
+            project.tasks.signArchives.signatureFiles.each {
+                artifact(it) {
+                    def matcher = it.file =~ /\.zip$/
+                    if (matcher.find()) {
+                        classifier = matcher.group(1)
+                    } else {
+                        classifier = null
+                    }
+                    extension = 'zip'
+                }
+            }
+        }
+    }
+}
+
+def setupPomForMavenCentral(pom) {
+    pom.withXml {
+        def root = asNode()
+
+        // eliminate test-scoped dependencies (no need in maven central POMs)
+        root.dependencies.removeAll { dep ->
+            dep.scope == "test"
+        }
+
+        // add all items necessary for maven central publication
+        root.children().last() + {
+            resolveStrategy = Closure.DELEGATE_FIRST
+
+            description 'Common build scripts for One SDK'
+            name 'One Common Build Scripts'
+            url 'https://github.com/hoangbv15/one-common-build-scripts'
+            organization {
+                name 'io.github.hoangbv15'
+                url 'https://hoangbv15.github.io/'
+            }
+            issueManagement {
+                system 'GitHub'
+                url 'https://github.com/hoangbv15/one-common-build-scripts/issues'
+            }
+            licenses {
+                license {
+                    name 'Apache License 2.0'
+                    url 'https://github.com/hoangbv15/one-common-build-scripts/blob/master/LICENSE'
+                    distribution 'repo'
+                }
+            }
+            scm {
+                url 'https://github.com/hoangbv15/one-common-build-scripts'
+                connection 'scm:https://github.com/hoangbv15/one-common-build-scripts.git'
+                developerConnection 'scm:git@github.com:hoangbv15/one-common-build-scripts.git'
+            }
+            developers {
+                developer {
+                    name 'Hoang Vu Bui'
+                }
+            }
+        }
+    }
+}
+
+model {
+    tasks.generatePomFileForMavenPublication {
+        destination = file("$buildDir/generated-pom.xml")
+    }
+    tasks.publishMavenPublicationToMavenLocal {
+        dependsOn project.tasks.signArchives
+    }
+    tasks.publishMavenPublicationToMavenRepository {
+        dependsOn project.tasks.signArchives
+    }
+}
+
+publish.dependsOn(buildArtifact)
+publishToMavenLocal.dependsOn(buildArtifact)
