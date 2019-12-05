@@ -5,7 +5,6 @@ apply from: 'gradleScripts/index.gradle'
 println "Publish Version: $publishVersion"
 println "Publish repo: $sonatypeMavenRepo"
 
-def artifactId = 'one-common-build-scripts'
 def artifactName = "${artifactId}.zip"
 def buildDir = 'build'
 
@@ -81,7 +80,7 @@ def setupPomForMavenCentral(pom) {
             }
             developers {
                 developer {
-                    name 'Hoang Vu Bui'
+                    name author
                 }
             }
         }

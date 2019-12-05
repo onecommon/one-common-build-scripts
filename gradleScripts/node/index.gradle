@@ -1,19 +1,48 @@
 def standardVersion(String version) {
     exec {
         executable "npm"
-        args "i"
-    }
-    exec {
-        executable "npm"
         args = ['run', 'release', '--', '--release-as', version]
     }
 }
 
-def prepareNode() {
+def perparePackageJson() {
+    println "Checking for existing package.json..."
+
+    if (!file('package.json').exists()) {
+        println "package.json does not exist. Generating..."
+        new File(projectDir, "package.json").text = """
+            {
+                "name": "${artifactId}",
+                "version": "1.0.0",
+                "description": "",
+                "scripts": {
+                    "release": "standard-version -t \\"\\""
+                },
+                "husky": {
+                    "hooks": {
+                    "commit-msg": "commitlint --env HUSKY_GIT_PARAMS"
+                    }
+                },
+                "keywords": [],
+                "author": "${author}",
+                "devDependencies": {
+                    "@commitlint/config-conventional": "^8.2.0",
+                    "commitlint": "^8.2.0",
+                    "husky": "^3.1.0",
+                    "standard-version": "^7.0.1"
+                }
+            }
+        """
+    }
+    else {
+        println "package.json already exists."
+    }
+}
+
+def prepareNodePackages() {
 	println "Checking for commitlint installation..."
 
-	if (!file('./node_modules/commitlint/').exists())
-    {
+	if (!file('./node_modules/commitlint/').exists()) {
         println "commitlint is not installed. Attempting to install commitlint"
         def output = new ByteArrayOutputStream()
         project.exec {
@@ -34,6 +63,11 @@ def prepareNode() {
     else {
     	println "commitlint already installed."
     }
+}
+
+def prepareNode() {
+    perparePackageJson()
+    prepareNodePackages()
 }
 
 ext {
