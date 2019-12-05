@@ -3,8 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "commitmsg": "commitlint -e $GIT_PARAMS",
     "release": "standard-version -t \"\""
+  },
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -e $HUSKY_GIT_PARAMS"
+    }
   },
   "keywords": [],
   "author": "Hoang Vu Bui",
