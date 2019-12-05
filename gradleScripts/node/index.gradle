@@ -16,7 +16,7 @@ def perparePackageJson() {
                 "version": "1.0.0",
                 "description": "",
                 "scripts": {
-                    "release": "standard-version -t \\"\\""
+                    "release": "standard-version"
                 },
                 "husky": {
                     "hooks": {
