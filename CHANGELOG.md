@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.2.1](https://github.com/hoangbv15/one-common-build-scripts/compare/v1.2.0...v1.2.1) (2019-12-05)
+
+
+### Bug Fixes
+
+* add workaround for MavenCentral metadata hash ([31600f0](https://github.com/hoangbv15/one-common-build-scripts/commit/31600f00604c4e22580a8877374ed3df0bf9fe43))
+
 ## [1.2.0](https://github.com/hoangbv15/one-common-build-scripts/compare/v1.0.0...v1.1.0) (2019-12-05)
 
 
