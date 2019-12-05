@@ -6,7 +6,7 @@ def TAG() {
     return 'release'
 }
 
-def bumpVersion(String version, boolean isPatch) {
+def bumpVersion(String version, boolean isPatch = false) {
     if (version == '' || version == null) {
         version = '0.0.0'
     }
@@ -29,7 +29,7 @@ def bumpVersion(String version, boolean isPatch) {
 
 def publishVersion() {
     if (isDevelop) {
-        return bumpVersion(latestTag, false) + '-SNAPSHOT'
+        return bumpVersion(latestTag) + '-SNAPSHOT'
     }
     else if (isMaster) {
         return latestTag
@@ -37,7 +37,7 @@ def publishVersion() {
     else {
         def matcher = branchName =~ /^feature\/(.+)/
         if (matcher.asBoolean()) {
-            return bumpVersion(latestTag, false) + "-${matcher[0][1]}-SNAPSHOT"
+            return bumpVersion(latestTag) + "-${matcher[0][1]}-SNAPSHOT"
         }
 
         matcher = branchName =~ /^(hotfix|backport|release)\/(.+)/
@@ -52,10 +52,10 @@ def publishVersion() {
 // Set publish version string
 if (project.hasProperty('customBuildVersion') && customBuildVersion?.trim()) {
     log(TAG(), "Custom build version: " + customBuildVersion)
-    ext.publishVersion = customBuildVersion
+    ext.releaseVersion = customBuildVersion
 } else {
     log(TAG(), 'No custom build version found')
-    ext.publishVersion = this.publishVersion()
+    ext.releaseVersion = bumpVersion(latestTag)
 }
 
 ext.shouldValidateRepo = project.hasProperty('shouldValidateRepo') && shouldValidateRepo == 'true'
@@ -74,13 +74,13 @@ if (!sonatypeUsername?.trim() || !sonatypePassword?.trim()) {
 // Release tasks
 task release {
     doLast {
-        cutRelease(publishVersion, shouldValidateRepo)
-        standardVersion(publishVersion)
+        cutRelease(releaseVersion, shouldValidateRepo)
+        standardVersion(releaseVersion)
     }
 }
 
 task finishRelease {
     doLast {
-        finishRelease(publishVersion)
+        finishRelease(releaseVersion)
     }
 }
