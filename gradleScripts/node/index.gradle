@@ -1,0 +1,42 @@
+def standardVersion(String version) {
+    exec {
+        executable "npm"
+        args "i"
+    }
+    exec {
+        executable "npm"
+        args = ['run', 'release', '--', '--release-as', version]
+    }
+}
+
+def prepareNode() {
+	println "Checking for commitlint installation..."
+
+	if (!file('./node_modules/commitlint/').exists())
+    {
+        println "commitlint is not installed. Attempting to install commitlint"
+        def output = new ByteArrayOutputStream()
+        project.exec {
+            commandLine 'which', 'npm'
+            standardOutput = output
+            ignoreExitValue true
+        }
+
+        if (output.toString().trim()) {
+            project.exec {
+                commandLine 'npm', 'i'
+            }
+        }
+        else {
+            throw new GradleException("Node installation is missing. Please install the latest node from https://nodejs.org/")
+        }
+    }
+    else {
+    	println "commitlint already installed."
+    }
+}
+
+ext {
+    standardVersion = { version -> this.standardVersion(version) }
+    prepareNode = { this.prepareNode() }
+}

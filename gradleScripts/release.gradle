@@ -1,4 +1,5 @@
 apply from: "gradleScripts/git/index.gradle"
+apply from: "gradleScripts/node/index.gradle"
 
 def bumpVersion(String version, boolean isPatch) {
     if (version == '' || version == null) {
@@ -41,9 +42,20 @@ def publishVersion() {
 
         throw new GradleException("No matching publishing version for non-conforming gitflow branch: '$branchName'.")
     }
-} 
+}
 
-ext.publishVersion = this.publishVersion()
+// Set publish version string
+if (project.hasProperty('customBuildVersion') && customBuildVersion?.trim()) {
+    println "Custom build version: " + customBuildVersion
+    ext.publishVersion = customBuildVersion
+} else {
+    println 'No custom build version found'
+    ext.publishVersion = this.publishVersion()
+}
+
+ext.shouldValidateRepo = project.hasProperty('shouldValidateRepo') && shouldValidateRepo == 'true'
+println "ShouldValidateRepo: " + ext.shouldValidateRepo
+
 ext.sonatypeMavenRepo = isRelease ? 
     "https://oss.sonatype.org/service/local/staging/deploy/maven2" :
     "https://oss.sonatype.org/content/repositories/snapshots"
@@ -52,4 +64,18 @@ if (!sonatypeUsername?.trim() || !sonatypePassword?.trim()) {
     println "sonatypeUsername and sonatypePassword variables are not set!"
 } else {
     println "Found sonatypeUsername and sonatypePassword"
+}
+
+// Release tasks
+task release {
+    doLast {
+        cutRelease(publishVersion, shouldValidateRepo)
+        standardVersion(publishVersion)
+    }
+}
+
+task finishRelease {
+    doLast {
+        finishRelease(publishVersion)
+    }
 }

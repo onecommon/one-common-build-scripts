@@ -12,6 +12,7 @@ def buildDir = 'build'
 task buildArtifact(type: Zip) {
    from './'
    include 'gradleScripts/**/*'
+   include 'commitlint.config.js'
    archiveFileName = artifactName
    destinationDirectory = file(buildDir)
 }

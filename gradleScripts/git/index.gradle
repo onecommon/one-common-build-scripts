@@ -161,15 +161,6 @@ public void finishRelease() {
     deleteBranch(releaseBranchName)
 }
 
-public void hotfix(String version) {
-    if (!isMaster()) {
-        throw new GradleException("Not on a master branch")
-    }
-    def branchName = "hotfix/" + version
-    createBranch(branchName)
-    checkoutBranch(branchName)
-}
-
 ext {
     isRelease = this.isRelease()
     isDevelop = this.isDevelop()
@@ -181,5 +172,4 @@ ext {
     latestTag = this.getLatestTag()
     cutRelease = { version, shouldValidateRepo -> this.cutRelease(version, shouldValidateRepo) }
     finishRelease = { this.finishRelease() }
-    hotfix = { version -> this.hotfix(version) }
 }
