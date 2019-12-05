@@ -17,7 +17,7 @@ def prepareNode() {
         println "commitlint is not installed. Attempting to install commitlint"
         def output = new ByteArrayOutputStream()
         project.exec {
-            commandLine 'which', 'npm'
+            commandLine 'npm', '-v'
             standardOutput = output
             ignoreExitValue true
         }
