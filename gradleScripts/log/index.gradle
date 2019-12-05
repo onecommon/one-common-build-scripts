@@ -1,0 +1,30 @@
+import groovy.time.*
+
+ext.startTime = new Date()
+
+def formatTwoDigit(number) {
+    if (number >= 10) {
+        return "$number"
+    }
+    return "0$number"
+}
+
+def getTimeElapsed() {
+    def duration = TimeCategory.minus(new Date(), startTime)
+    def result = formatTwoDigit(duration.seconds)
+    if (duration.minutes > 0) {
+        result = "${formatTwoDigit(duration.minutes)}:${result}"
+    }
+    if (duration.hours > 0) {
+        result = "${formatTwoDigit(duration.hours)}:${result}"
+    }
+    return result
+}
+
+def log(String tag, String message) {
+    println "[${getTimeElapsed()}][${tag}] ${message}"
+}
+
+ext {
+    log = { tag, message -> this.log(tag, message) }
+}

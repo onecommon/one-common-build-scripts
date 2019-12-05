@@ -1,5 +1,6 @@
 def rootDir = 'gradleScripts'
 
+apply from: "$rootDir/log/index.gradle"
 apply from: "$rootDir/file/index.gradle"
 apply from: "$rootDir/git/index.gradle"
 apply from: "$rootDir/node/index.gradle"

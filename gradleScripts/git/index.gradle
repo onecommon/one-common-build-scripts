@@ -1,5 +1,11 @@
 import java.util.*
 
+apply from: 'gradleScripts/log/index.gradle'
+
+def TAG() {
+    return 'git'
+}
+
 def execCommand(String cmdText) {
     def process = cmdText.execute()
     process.waitFor()
@@ -88,7 +94,7 @@ private void reset() {
 }
 
 private void push(String branchName, boolean dryRun = false) {
-    println "Checking out $branchName and pushing (dryRun = $dryRun)..."
+    log(TAG(), "Checking out $branchName and pushing (dryRun = $dryRun)...")
     checkoutBranch(branchName)
     if (dryRun) {
         execCommand("git push origin HEAD --tags --dry-run")
@@ -126,7 +132,7 @@ def verifyReleaseTag() {
         throw new GradleException("Release branch '$branchName' does not match the latest tag '$latestTag'")
     }
 
-    println "Release branch '$branchName' matches the latest tag '$latestTag'"
+    log(TAG(), "Release branch '$branchName' matches the latest tag '$latestTag'")
 }
 
 public void cutRelease(String version, boolean shouldValidateRepo) {
