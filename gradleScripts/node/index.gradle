@@ -11,22 +11,23 @@ def standardVersion(String version) {
     }
 }
 
-def findGradleProperty(String property) {
+def findGradleProperty(String property, String defaultValue) {
     def value = project.findProperty(property)
     if (!value) {
-        log(TAG(), "Property $property not found. Define in gradle.properties to fill package.json with meaningful values.")
+        log(TAG(), "Property $property not found in gradle.properties. Using default value $defaultValue")
+    } else {
+        log(TAG(), "Property $property found: $value")
     }
+    return value
 }
 
 def perparePackageJson() {
-    def artifactId = findGradleProperty('artifactId')
-    def author = findGradleProperty('author')
-    if (!artifactId || !author) 
-
     log(TAG(), 'Checking for existing package.json...')
 
     if (!file('package.json').exists()) {
         log(TAG(), 'package.json does not exist. Generating...')
+        def artifactId = findGradleProperty('artifactId', 'unnamed')
+        def author = findGradleProperty('author', 'unknown')
         new File(projectDir, "package.json").text = """
             {
                 "name": "${artifactId}",
@@ -57,28 +58,20 @@ def perparePackageJson() {
 }
 
 def prepareNodePackages() {
-	log(TAG(), 'Checking for commitlint installation...')
+    def output = new ByteArrayOutputStream()
+    project.exec {
+        commandLine 'npm', '-v'
+        standardOutput = output
+        ignoreExitValue true
+    }
 
-	if (!file('./node_modules/commitlint/').exists()) {
-        log(TAG(), 'commitlint is not installed. Attempting to install commitlint')
-        def output = new ByteArrayOutputStream()
+    if (output.toString().trim()) {
         project.exec {
-            commandLine 'npm', '-v'
-            standardOutput = output
-            ignoreExitValue true
-        }
-
-        if (output.toString().trim()) {
-            project.exec {
-                commandLine 'npm', 'i'
-            }
-        }
-        else {
-            throw new GradleException('Node installation is missing. Please install the latest node from https://nodejs.org/')
+            commandLine 'npm', 'i'
         }
     }
     else {
-    	log(TAG(), 'commitlint already installed.')
+        throw new GradleException('Node installation is missing. Please install the latest node from https://nodejs.org/')
     }
 }
 
