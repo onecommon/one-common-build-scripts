@@ -31,11 +31,77 @@ def getAllFiles(path, recursive = false) {
     return results;
 }
 
+def searchForFile(root, fileName) {
+    def rootFile = root instanceof File ? root : new File(root)
+
+    if (!rootFile.exists() || rootFile.isFile()) {
+        return null
+    }
+
+    def file = new File(pathCombine(root, fileName))
+    if (file.exists()) {
+        return file
+    }
+
+    def result = null
+    rootFile.eachFile {
+        def search = searchForFile(it, fileName)
+        if (search != null) {
+            result = search
+        }
+    }
+    return result
+}
+
 public String pathCombine(Object... files) {
-    return files.join(File.separator) 
+    return files.join(File.separator)
+}
+
+def replaceInFiles(List files, String regex, Closure replace, String encoding = null) {
+    files.each {
+        def file = it instanceof File ? it : new File(it)
+        def text = file.text
+        text = text.replaceAll(regex) { m -> replace(m, file) }
+        if (encoding) {
+            file.withWriter(encoding) { w -> w.write(text) }
+        } else {
+            file.write(text)
+        }
+    }
+}
+
+def patchFilesForTasks(List files, String regex, Closure replace, String reverseRegex, Closure reverseReplace, List tasksToPatch, String encoding = null) {
+    tasksToPatch.each {
+        def currentTask = it
+        def taskName = currentTask.name
+        // Test that the task was already added to the project
+        def patchTaskName = "${taskName}Patch"
+        if (tasks.findByName(patchTaskName)) {
+            return
+        }
+        def patchTasks = [
+            patch: task(patchTaskName) {
+                doLast {
+                    // First, replace the symbols with actual value
+                    replaceInFiles(files, regex, replace, encoding)
+                }
+            },
+            reverse: task("${taskName}Reverse") {
+                doLast {
+                    // Afterwards, reverse the values back to symbol
+                    replaceInFiles(files, reverseRegex, reverseReplace, encoding)
+                }
+            }
+        ]
+        currentTask.dependsOn(patchTasks.patch)
+        currentTask.finalizedBy(patchTasks.reverse)
+    }
 }
 
 ext {
     getAllFiles = { path, recursive = false -> this.getAllFiles(path, recursive) }
     pathCombine = { ...files -> this.pathCombine(files) }
+    searchForFile = { root, fileName -> this.searchForFile(root, fileName) }
+    replaceInFiles = { files, regex, replace, encoding = null -> this.replaceInFiles(files, regex, replace, encoding) }
+    patchFilesForTasks = { files, regex, replace, reverseRegex, reverseReplace, tasksToPatch, encoding = null -> this.patchFilesForTasks(files, regex, replace, reverseRegex, reverseReplace, tasksToPatch, encoding) }
 }
