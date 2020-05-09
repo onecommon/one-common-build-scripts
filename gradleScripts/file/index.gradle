@@ -1,3 +1,9 @@
+apply from: 'gradleScripts/log/index.gradle'
+
+def TAG() {
+    return 'file'
+}
+
 def getAllFiles(path, recursive = false) {
     def results = []
     def file = new File(path)
@@ -61,7 +67,17 @@ def replaceInFiles(List files, String regex, Closure replace, String encoding = 
     files.each {
         def file = it instanceof File ? it : new File(it)
         def text = file.text
-        text = text.replaceAll(regex) { m -> replace(m, file) }
+        def anyMatch = false
+        text = text.replaceAll(regex) { m -> 
+            anyMatch = true
+            def result = replace(m, file)
+            log(TAG(), "In $file: replacing $m with $result")
+            return result
+        }
+        if (!anyMatch) {
+            log(TAG(), "In $file: no match for $regex")
+            return
+        }
         if (encoding) {
             file.withWriter(encoding) { w -> w.write(text) }
         } else {
