@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.4.0](https://github.com/onecommon/one-common-build-scripts/compare/v1.3.0...v1.4.0) (2020-05-09)
+
+
+### Features
+
+* support regex replace in files ([f2cd0cb](https://github.com/onecommon/one-common-build-scripts/commit/f2cd0cbb53f83e9bcb91cabcf20c707a30dad8cb))
+
 ## [1.3.0](https://github.com/onecommon/one-common-build-scripts/compare/v1.2.1...v1.3.0) (2020-01-15)
 
 
