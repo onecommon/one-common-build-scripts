@@ -1,5 +1,58 @@
-apply plugin: 'maven-publish'
-apply plugin: 'signing'
+// Test
+buildscript {
+    repositories {
+        mavenLocal()
+    }
+
+    // dependencies {
+    //     classpath "$group:$artifactId:$publishingVersion"
+    // }
+}
+
+plugins {
+    id 'java-gradle-plugin'
+    id 'org.jetbrains.kotlin.jvm' version '1.3.72'
+    id 'maven-publish'
+    id 'signing'
+}
+
+// apply plugin: "$group.$artifactId"
+
+def JvmVersion = 1.8
+sourceCompatibility = JvmVersion
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    testImplementation "org.junit.jupiter:junit-jupiter:5.6.2"
+    testImplementation "io.mockk:mockk:1.10.0"
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "$JvmVersion"
+}
+
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "$JvmVersion"
+}
+
+test {
+    useJUnitPlatform()
+}
+
+gradlePlugin {
+    plugins {
+        simplePlugin {
+            id = "$group.$artifactId"
+            implementationClass = "${group}.OneCommonBuildPlugin"
+        }
+    }
+}
+// ------------
+
 apply from: 'gradleScripts/index.gradle'
 
 println "Publish Version: $publishVersion"
