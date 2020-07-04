@@ -1,5 +1,9 @@
 .gradle
 .idea
+.classpath
+.project
+.settings
+bin
 build
 package*.json
 node_modules
