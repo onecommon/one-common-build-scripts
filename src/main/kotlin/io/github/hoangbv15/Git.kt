@@ -1,9 +1,10 @@
 package io.github.hoangbv15
 
+import io.github.hoangbv15.commandline.ICommandLine
 import io.github.hoangbv15.logging.Log
 import org.gradle.api.GradleException
 
-class Git(private val commandLine: CommandLine, private val log: Log) {
+class Git(private val commandLine: ICommandLine, private val log: Log) {
     private val TAG: String = this::class.simpleName!!
 
     fun getBranchName(): String {
@@ -11,7 +12,7 @@ class Git(private val commandLine: CommandLine, private val log: Log) {
     }
 
     fun branchMatches(regex: String): Boolean {
-        return getBranchName().replace("\\s", "").matches(Regex(regex))
+        return getBranchName().matches(Regex(regex))
     }
 
     fun isMaster(): Boolean {
@@ -31,7 +32,7 @@ class Git(private val commandLine: CommandLine, private val log: Log) {
     }
 
     fun getTags(): List<String> {
-        val tagStrs = commandLine.execCommand("git tag -l --sort=-version:refname")
+        val tagStrs = exec("git tag -l --sort=-version:refname")
         if (tagStrs.trim().isEmpty()) {
             return emptyList()
         }
@@ -57,9 +58,9 @@ class Git(private val commandLine: CommandLine, private val log: Log) {
     }
 
     private fun validateRepo() {
-        val status = commandLine.execCommand("git status --porcelain")
+        val status = exec("git status --porcelain")
         if (status.isNotEmpty()) {
-            throw GradleException("Branch is not clean")
+            throw GradleException("Branch is not clean: $status")
         }
     }
 

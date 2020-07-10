@@ -1,7 +1,7 @@
 package io.github.hoangbv15.logging
 
 class Log {
-    val targets: MutableList<LogTarget> = mutableListOf()
+    val targets: MutableList<ILogTarget> = mutableListOf()
     var logLevel: LogLevel = LogLevel.DEBUG
 
     fun debug(tag: String, msg: String) {

@@ -1,5 +1,6 @@
 package io.github.hoangbv15
 
+import io.github.hoangbv15.commandline.ICommandLine
 import io.github.hoangbv15.logging.ConsoleLogTarget
 import io.github.hoangbv15.logging.Log
 import io.mockk.every
@@ -14,7 +15,7 @@ import org.junit.jupiter.params.provider.CsvSource
 @ExtendWith(MockKExtension::class)
 class GitTests {
     lateinit var git: Git
-    @MockK lateinit var commandLineMock: CommandLine
+    @MockK lateinit var commandLineMock: ICommandLine
 
     @BeforeEach
     fun setup() {

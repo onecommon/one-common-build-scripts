@@ -13,13 +13,19 @@ plugins {
     id 'java-gradle-plugin'
     id 'org.jetbrains.kotlin.jvm' version '1.3.72'
     id 'maven-publish'
-    id 'signing'
+//    id 'signing'
 }
 
 // apply plugin: "$group.$artifactId"
+apply from: 'gradleScripts/index.gradle'
+
+println "Publish Version: $publishVersion"
+println "Publish repo: $sonatypeMavenRepo"
 
 def JvmVersion = 1.8
 sourceCompatibility = JvmVersion
+version publishVersion
+group group
 
 repositories {
     mavenCentral()
@@ -53,21 +59,18 @@ gradlePlugin {
 }
 // ------------
 
-apply from: 'gradleScripts/index.gradle'
 
-println "Publish Version: $publishVersion"
-println "Publish repo: $sonatypeMavenRepo"
 
-def artifactName = "${artifactId}.zip"
-def buildDir = 'build'
+//def artifactName = "${artifactId}.zip"
+//def buildDir = 'build'
 
-task buildArtifact(type: Zip) {
-   from './'
-   include 'gradleScripts/**/*'
-   include 'commitlint.config.js'
-   archiveFileName = artifactName
-   destinationDirectory = file(buildDir)
-}
+//task buildArtifact(type: Zip) {
+//   from './'
+//   include 'gradleScripts/**/*'
+//   include 'commitlint.config.js'
+//   archiveFileName = artifactName
+//   destinationDirectory = file(buildDir)
+//}
 
 publishing {
     repositories {
@@ -83,17 +86,17 @@ publishing {
     publications {
         maven(MavenPublication) {
             artifactId = artifactId
-            version publishVersion
-            artifact pathCombine(buildDir, artifactName)
+//            version publishVersion
+//            artifact pathCombine(buildDir, artifactName)
 
-            setupPomForMavenCentral(pom)
+//            setupPomForMavenCentral(pom)
         }
     }
 }
 
-signing {
-    sign publishing.publications.maven
-}
+//signing {
+//    sign publishing.publications.maven
+//}
 
 def setupPomForMavenCentral(pom) {
     pom.withXml {
@@ -140,5 +143,5 @@ def setupPomForMavenCentral(pom) {
     }
 }
 
-publish.dependsOn(buildArtifact)
-publishToMavenLocal.dependsOn(buildArtifact)
+//publish.dependsOn(buildArtifact)
+//publishToMavenLocal.dependsOn(buildArtifact)
