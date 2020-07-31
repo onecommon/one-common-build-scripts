@@ -14,7 +14,7 @@ def getAllFiles(path, recursive = false) {
 
     if (file.isFile()) {
         results.add(file)
-        return result;
+        return results;
     }
 
     if (file.isDirectory()) {
