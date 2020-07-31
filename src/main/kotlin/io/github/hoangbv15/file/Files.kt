@@ -6,7 +6,7 @@ import org.gradle.api.Task
 import java.io.File
 import java.nio.charset.Charset
 
-class FileSystem(private val log: Log): IFileSystem {
+class Files(private val log: Log, private val project: Project): IFiles {
     private val TAG: String = this::class.simpleName!!
 
     override fun getAllFiles(path: String, recursive: Boolean): List<File> {
@@ -97,7 +97,6 @@ class FileSystem(private val log: Log): IFileSystem {
     }
 
     override fun patchFilesForTasks(
-        project: Project,
         files: List<Any>,
         regex: Regex,
         replace: (MatchResult, File) -> String,
